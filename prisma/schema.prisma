@@ -575,6 +575,8 @@ model solicitantes_unicos {
   zona             String?  @db.VarChar(35)
   pontoReferencia  String?  @db.VarChar(255)
   secaoEleitoral   String?  @db.VarChar(45)
+  indicadoPor      String?
+  meio             String?
   createdAt        DateTime @default(now()) @db.DateTime(0)
   updatedAt        DateTime @default(now()) @db.DateTime(0)
   senha            String?  @db.VarChar(255)
