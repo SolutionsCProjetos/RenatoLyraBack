@@ -11,7 +11,7 @@ const demandasRoutes = require('./routes/demandas');
 const app = express();
 const upload = multer();
 
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 app.use(morgan('dev'));
 
