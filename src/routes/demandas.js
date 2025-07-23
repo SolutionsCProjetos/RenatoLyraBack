@@ -25,7 +25,8 @@ router.post('/', async (req, res) => {
       envioCobranca2,
       envioParaResponsavel,
       observacoes,
-      solicitantId
+      solicitantId,
+      indicadoPor
     } = req.body;
 
     console.log(req.body, '===============')
@@ -66,7 +67,8 @@ router.post('/', async (req, res) => {
         envioCobranca2,
         envioParaResponsavel,
         observacoes,
-        solicitanteId: parseInt(solicitantId)
+        solicitanteId: parseInt(solicitantId),
+        indicadoPor
       }
     });
 
@@ -196,7 +198,8 @@ router.put('/:id', async (req, res) => {
       envioCobranca2,
       envioParaResponsavel,
       observacoes,
-      solicitantId
+      solicitantId,
+      indicadoPor
     } = req.body;
 
     // Validação de solicitantId
@@ -224,7 +227,8 @@ router.put('/:id', async (req, res) => {
         observacoes,
         solicitantes: {
           connect: { id: solicitanteIdParsed }
-        }
+        },
+        indicadoPor
       }
     });
 
