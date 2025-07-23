@@ -162,7 +162,7 @@ model demandas {
   createdAt            DateTime                 @default(now()) @db.DateTime(0)
   updatedAt            DateTime                 @default(now()) @db.DateTime(0)
   solicitantes         solicitantes             @relation(fields: [solicitanteId], references: [id], onUpdate: Restrict, map: "demandas_ibfk_1")
-  indicadoPor String?
+  indicadoPor          String?
 
   @@index([solicitanteId], map: "demandas_ibfk_1")
 }
