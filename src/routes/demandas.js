@@ -8,6 +8,94 @@ router.use(authMiddleware);
 
 // Criar
 
+// router.post('/', async (req, res) => {
+//   try {
+//     const {
+//       protocolo,
+//       setor,
+//       prioridade,
+//       status,
+//       dataSolicitacao,
+//       dataTermino,
+//       solicitant,
+//       reincidencia,
+//       meioSolicitacao,
+//       anexarDocumentos,
+//       envioCobranca1,
+//       envioCobranca2,
+//       envioParaResponsavel,
+//       observacoes,
+//       solicitantId,
+//       indicadoPor
+//     } = req.body;
+
+//     console.log(req.body, '===============')
+
+//     // 1. Verificar se o solicitante existe
+//     const solicitanteExistente = await prisma.solicitantes_unicos.findUnique({
+//       where: { id: parseInt(solicitantId) }
+//     });
+
+//     if (!solicitanteExistente) {
+//       return res.status(400).json({ 
+//         error: 'Solicitante não encontrado',
+//         details: `Nenhum solicitante encontrado com o ID: ${solicitantId}`
+//       });
+//     }
+
+//     // 2. Mapear valores para os enums corretos
+//     const reincidenciaEnum = reincidencia === 'N_o' ? 'N_o' : 'Sim';
+//     const meioSolicitacaoEnum = meioSolicitacao === 'WhatsApp' ? 'WhatsApp' : 'Presencial';
+//     const statusEnum = status === 'Aguardando_Retorno' ? 'Aguardando_Retorno' :
+//                       status === 'Conclu_da' ? 'Conclu_da' : 
+//                       status === 'Cancelada' ? 'Cancelada' : 'Pendente';
+
+//     // 3. Criar a demanda
+//     const novaDemanda = await prisma.demandas.create({
+//       data: {
+//         protocolo,
+//         setor,
+//         prioridade,
+//         status: statusEnum,
+//         dataSolicitacao: dataSolicitacao ? new Date(new Date(dataSolicitacao).setDate(new Date(dataSolicitacao).getDate() + 1)) : new Date(),
+//         dataTermino: dataTermino ? new Date(dataTermino) : null,
+//         solicitant,
+//         reincidencia: reincidenciaEnum,
+//         meioSolicitacao: meioSolicitacaoEnum,
+//         anexarDocumentos,
+//         envioCobranca1,
+//         envioCobranca2,
+//         envioParaResponsavel,
+//         observacoes,
+//         solicitanteId: parseInt(solicitantId),
+//         indicadoPor
+//       }
+//     });
+
+//     res.json(novaDemanda);
+//   } catch (error) {
+//     console.error('Erro detalhado:', {
+//       message: error.message,
+//       code: error.code,
+//       meta: error.meta
+//     });
+    
+//     let errorMessage = 'Erro ao criar demanda';
+//     if (error.code === 'P2003') {
+//       errorMessage = 'Erro de relacionamento: O solicitante informado não existe';
+//     } else if (error.code === 'P2002') {
+//       errorMessage = 'Violação de restrição única: Protocolo já existe';
+//     }
+
+//     res.status(500).json({ 
+//       error: errorMessage,
+//       details: error.message,
+//       code: error.code
+//     });
+//   }
+// });
+
+
 router.post('/', async (req, res) => {
   try {
     const {
@@ -29,8 +117,6 @@ router.post('/', async (req, res) => {
       indicadoPor
     } = req.body;
 
-    console.log(req.body, '===============')
-
     // 1. Verificar se o solicitante existe
     const solicitanteExistente = await prisma.solicitantes_unicos.findUnique({
       where: { id: parseInt(solicitantId) }
@@ -50,14 +136,14 @@ router.post('/', async (req, res) => {
                       status === 'Conclu_da' ? 'Conclu_da' : 
                       status === 'Cancelada' ? 'Cancelada' : 'Pendente';
 
-    // 3. Criar a demanda
+    // 3. Criar a demanda com tratamento correto de datas
     const novaDemanda = await prisma.demandas.create({
       data: {
         protocolo,
         setor,
         prioridade,
         status: statusEnum,
-        dataSolicitacao: dataSolicitacao ? new Date(new Date(dataSolicitacao).setDate(new Date(dataSolicitacao).getDate() + 1)) : new Date(),
+        dataSolicitacao: dataSolicitacao ? new Date(dataSolicitacao) : new Date(), // Corrigido aqui
         dataTermino: dataTermino ? new Date(dataTermino) : null,
         solicitant,
         reincidencia: reincidenciaEnum,
@@ -173,6 +259,83 @@ router.get('/:id', async (req, res) => {
 
 
 // Atualizar
+// router.put('/:id', async (req, res) => {
+//   try {
+//     const demandaId = parseInt(req.params.id, 10);
+
+//     if (isNaN(demandaId)) {
+//       return res.status(400).json({ error: 'ID inválido.' });
+//     }
+
+//     const {
+//       protocolo,
+//       setor,
+//       prioridade,
+//       status,
+//       dataSolicitacao,
+//       dataTermino,
+//       solicitant,
+//       nomeCompleto,
+//       cpf,
+//       reincidencia,
+//       meioSolicitacao,
+//       anexarDocumentos,
+//       envioCobranca1,
+//       envioCobranca2,
+//       envioParaResponsavel,
+//       observacoes,
+//       solicitantId,
+//       indicadoPor
+//     } = req.body;
+
+//     // Validação de solicitantId
+//     const solicitanteIdParsed = Number(solicitantId);
+//     if (isNaN(solicitanteIdParsed)) {
+//       return res.status(400).json({ error: 'SolicitanteId inválido' });
+//     }
+
+//     const demandaAtualizada = await prisma.demandas.update({
+//       where: { id: demandaId },
+//       data: {
+//         protocolo,
+//         setor,
+//         prioridade,
+//         status,
+//         dataSolicitacao: new Date(dataSolicitacao),
+//         dataTermino: dataTermino ? new Date(dataTermino) : null,
+//         solicitant,
+//         reincidencia,
+//         meioSolicitacao,
+//         anexarDocumentos,
+//         envioCobranca1,
+//         envioCobranca2,
+//         envioParaResponsavel,
+//         observacoes,
+//         solicitantes: {
+//           connect: { id: solicitanteIdParsed }
+//         },
+//         indicadoPor
+//       }
+//     });
+
+//     // Atualização opcional do solicitante
+//     if (nomeCompleto || cpf) {
+//       await prisma.solicitantes.update({
+//         where: { id: solicitanteIdParsed },
+//         data: {
+//           ...(nomeCompleto && { nomeCompleto }),
+//           ...(cpf && { cpf })
+//         }
+//       });
+//     }
+
+//     res.json(demandaAtualizada);
+//   } catch (error) {
+//     console.error('Erro ao editar demanda:', error);
+//     res.status(500).json({ error: 'Erro ao editar demanda' });
+//   }
+// });
+
 router.put('/:id', async (req, res) => {
   try {
     const demandaId = parseInt(req.params.id, 10);
@@ -208,6 +371,7 @@ router.put('/:id', async (req, res) => {
       return res.status(400).json({ error: 'SolicitanteId inválido' });
     }
 
+    // Atualização da demanda com tratamento correto de datas
     const demandaAtualizada = await prisma.demandas.update({
       where: { id: demandaId },
       data: {
@@ -215,7 +379,7 @@ router.put('/:id', async (req, res) => {
         setor,
         prioridade,
         status,
-        dataSolicitacao: new Date(dataSolicitacao),
+        dataSolicitacao: dataSolicitacao ? new Date(dataSolicitacao) : undefined, // Corrigido aqui
         dataTermino: dataTermino ? new Date(dataTermino) : null,
         solicitant,
         reincidencia,
@@ -238,15 +402,35 @@ router.put('/:id', async (req, res) => {
         where: { id: solicitanteIdParsed },
         data: {
           ...(nomeCompleto && { nomeCompleto }),
-          ...(cpf && { cpf })
+          ...(cpf && { cpf: cpf.replace(/\D/g, '') }) // Normaliza CPF se for atualizado
         }
       });
     }
 
-    res.json(demandaAtualizada);
+    res.json({
+      success: true,
+      demanda: demandaAtualizada,
+      message: 'Demanda atualizada com sucesso'
+    });
   } catch (error) {
-    console.error('Erro ao editar demanda:', error);
-    res.status(500).json({ error: 'Erro ao editar demanda' });
+    console.error('Erro ao editar demanda:', {
+      message: error.message,
+      code: error.code,
+      meta: error.meta
+    });
+
+    let errorMessage = 'Erro ao atualizar demanda';
+    if (error.code === 'P2025') {
+      errorMessage = 'Registro não encontrado';
+    } else if (error.code === 'P2002') {
+      errorMessage = 'Violação de restrição única';
+    }
+
+    res.status(500).json({ 
+      error: errorMessage,
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      code: error.code
+    });
   }
 });
 
