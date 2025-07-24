@@ -652,45 +652,39 @@ router.put('/:id', async (req, res) => {
     const id = parseInt(req.params.id);
     const { indicadoPor, ...dadosSolicitanteUnico } = req.body;
 
+    // Se indicadoPor foi enviado, inclui nos dados de atualização de ambas tabelas
+    if (indicadoPor !== undefined) {
+      dadosSolicitanteUnico.indicadoPor = indicadoPor;
+    }
+
     // Normaliza CPF se estiver sendo atualizado
     if (dadosSolicitanteUnico.cpf) {
       dadosSolicitanteUnico.cpf = dadosSolicitanteUnico.cpf.replace(/\D/g, '');
     }
 
-    console.log(`Atualizando solicitante ID ${id}`, {
-      dadosSolicitanteUnico,
-      indicadoPor
-    });
+    console.log(`Atualizando solicitante ID ${id}`, dadosSolicitanteUnico);
 
-    // Atualiza a tabela solicitantes_unicos (PUT completo)
+    // Atualiza a tabela solicitantes_unicos (todos os campos incluindo indicadoPor se existir)
     const updatedUnico = await prisma.solicitantes_unicos.update({
       where: { id },
       data: dadosSolicitanteUnico
     });
 
-    // Prepara os dados para atualização da tabela solicitantes
-    const dadosAtualizacaoSolicitante = {};
-    
-    // Atualiza apenas o indicadoPor se foi enviado
-    if (indicadoPor !== undefined) {
-      dadosAtualizacaoSolicitante.indicadoPor = indicadoPor;
-    }
-
+    // Atualiza apenas o indicadoPor na tabela solicitantes (se existir)
     let updatedSolicitante = null;
-    
-    // Se tem algo para atualizar na tabela solicitantes
-    if (Object.keys(dadosAtualizacaoSolicitante).length > 0) {
+    if (indicadoPor !== undefined) {
       updatedSolicitante = await prisma.solicitantes.update({
         where: { id },
-        data: dadosAtualizacaoSolicitante
+        data: { indicadoPor }
       });
     }
 
     res.json({
       message: 'Atualização realizada com sucesso',
       detalhes: {
-        solicitantes_unicos: 'Todos os campos enviados foram atualizados',
-        solicitantes: updatedSolicitante 
+        solicitantes_unicos: 'Todos os campos enviados foram atualizados' + 
+          (indicadoPor !== undefined ? ' (incluindo indicadoPor)' : ''),
+        solicitantes: indicadoPor !== undefined 
           ? `Campo 'indicadoPor' atualizado para: ${indicadoPor}`
           : 'Nenhum campo atualizado (indicadoPor não foi enviado)',
       },
