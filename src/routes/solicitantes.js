@@ -600,49 +600,120 @@ router.get('/:id', async (req, res) => {
 
 // Atualizar
 // Atualizar solicitante
+// router.put('/:id', async (req, res) => {
+//   try {
+//     const {
+//       nomeCompleto,
+//       cpf,
+//       titulo,
+//       telefoneContato,
+//       email,
+//       cep,
+//       endereco,
+//       num,
+//       bairro,
+//       zona,
+//       pontoReferencia,
+//       secaoEleitoral
+//     } = req.body;
+
+//     const dataAtualizada = {
+//       nomeCompleto,
+//       cpf,
+//       titulo,
+//       telefoneContato,
+//       email,
+//       cep,
+//       endereco,
+//       num,
+//       bairro,
+//       zona,
+//       pontoReferencia,
+//       secaoEleitoral
+//     };
+
+//     console.log('Atualizando solicitante ID:', req.params.id, 'com dados:', dataAtualizada);
+
+//     const item = await prisma.solicitantes_unicos.update({
+//       where: { id: parseInt(req.params.id) },
+//       data: dataAtualizada
+//     });
+
+//     res.json(item);
+//   } catch (error) {
+//     console.error('Erro no PUT /solicitantes/:id:', error);
+//     res.status(500).json({ error: 'Erro ao atualizar', detalhe: error.message });
+//   }
+// });
+
+
 router.put('/:id', async (req, res) => {
   try {
-    const {
-      nomeCompleto,
-      cpf,
-      titulo,
-      telefoneContato,
-      email,
-      cep,
-      endereco,
-      num,
-      bairro,
-      zona,
-      pontoReferencia,
-      secaoEleitoral
-    } = req.body;
+    const id = parseInt(req.params.id);
+    const { indicadoPor, ...dadosSolicitanteUnico } = req.body;
 
-    const dataAtualizada = {
-      nomeCompleto,
-      cpf,
-      titulo,
-      telefoneContato,
-      email,
-      cep,
-      endereco,
-      num,
-      bairro,
-      zona,
-      pontoReferencia,
-      secaoEleitoral
-    };
+    // Normaliza CPF se estiver sendo atualizado
+    if (dadosSolicitanteUnico.cpf) {
+      dadosSolicitanteUnico.cpf = dadosSolicitanteUnico.cpf.replace(/\D/g, '');
+    }
 
-    console.log('Atualizando solicitante ID:', req.params.id, 'com dados:', dataAtualizada);
-
-    const item = await prisma.solicitantes_unicos.update({
-      where: { id: parseInt(req.params.id) },
-      data: dataAtualizada
+    console.log(`Atualizando solicitante ID ${id}`, {
+      dadosSolicitanteUnico,
+      indicadoPor
     });
 
-    res.json(item);
+    // Atualiza a tabela solicitantes_unicos (PUT completo)
+    const updatedUnico = await prisma.solicitantes_unicos.update({
+      where: { id },
+      data: dadosSolicitanteUnico
+    });
+
+    // Prepara os dados para atualização da tabela solicitantes
+    const dadosAtualizacaoSolicitante = {};
+    
+    // Atualiza apenas o indicadoPor se foi enviado
+    if (indicadoPor !== undefined) {
+      dadosAtualizacaoSolicitante.indicadoPor = indicadoPor;
+    }
+
+    let updatedSolicitante = null;
+    
+    // Se tem algo para atualizar na tabela solicitantes
+    if (Object.keys(dadosAtualizacaoSolicitante).length > 0) {
+      updatedSolicitante = await prisma.solicitantes.update({
+        where: { id },
+        data: dadosAtualizacaoSolicitante
+      });
+    }
+
+    res.json({
+      message: 'Atualização realizada com sucesso',
+      detalhes: {
+        solicitantes_unicos: 'Todos os campos enviados foram atualizados',
+        solicitantes: updatedSolicitante 
+          ? `Campo 'indicadoPor' atualizado para: ${indicadoPor}`
+          : 'Nenhum campo atualizado (indicadoPor não foi enviado)',
+      },
+      dados: {
+        solicitante_unico: updatedUnico,
+        solicitante: updatedSolicitante || 'Não modificado'
+      }
+    });
+
   } catch (error) {
-    console.error('Erro no PUT /solicitantes/:id:', error);
-    res.status(500).json({ error: 'Erro ao atualizar', detalhe: error.message });
+    console.error('Erro na atualização:', error);
+    
+    if (error.code === 'P2025') {
+      return res.status(404).json({ 
+        error: 'Registro não encontrado',
+        detalhe: error.meta?.cause || 'O ID pode não existir nas tabelas'
+      });
+    }
+
+    res.status(500).json({ 
+      error: 'Erro ao atualizar', 
+      detalhe: error.message 
+    });
   }
 });
 
