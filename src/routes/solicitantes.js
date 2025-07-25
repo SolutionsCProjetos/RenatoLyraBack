@@ -172,73 +172,74 @@ router.post('/register', async (req, res) => {
   try {
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // 1. Verifica se já existe em solicitantes_unicos
-    const candidatosUnicos = await prisma.solicitantes_unicos.findMany();
-    const existenteUnico = candidatosUnicos.find(entry => {
-      const cpfBanco = entry.cpf?.replace(/\D/g, '');
-      return cpfBanco === cpfLimpo;
+    // 1. Busca solicitantes_unicos
+    const existenteUnico = await prisma.solicitantes_unicos.findFirst({
+      where: { cpf: cpfLimpo }
     });
 
-    // Se já existe com senha definida => bloqueia
     if (existenteUnico && existenteUnico.senha?.trim()) {
       return res.status(400).json({
         error: 'Já existe um usuário com este CPF e senha definida. Faça login ou recupere sua senha.'
       });
     }
 
-    // 2. Verifica se existe na tabela solicitantes
-    let solicitante = await prisma.solicitantes.findFirst({
+    // 2. Busca solicitantes
+    const solicitanteExistente = await prisma.solicitantes.findFirst({
       where: { cpf: cpfLimpo }
     });
 
-    let novoId;
-
-    // Remove o campo 'meio' de dados (não existe na tabela solicitantes)
     const { meio, ...dadosSemMeio } = dados;
+    let idFinal;
 
-    if (solicitante) {
-      novoId = solicitante.id;
+    if (solicitanteExistente) {
+      idFinal = solicitanteExistente.id;
 
-      // Se solicitantes_unicos ainda não existe com esse ID, cria agora com mesmo ID
+      // Se solicitantes_unicos não existe com esse ID, cria agora
       if (!existenteUnico) {
         await prisma.solicitantes_unicos.create({
           data: {
-            id: novoId,
+            id: idFinal,
             cpf: cpfLimpo,
             senha: senhaHash,
+            meio: meio || null,
             ...dadosSemMeio
           }
         });
       } else {
-        // Atualiza a senha se não estiver definida
+        // Atualiza solicitantes_unicos com o mesmo ID
         await prisma.solicitantes_unicos.update({
-          where: { id: existenteUnico.id },
-          data: { senha: senhaHash }
+          where: { id: idFinal },
+          data: {
+            senha: senhaHash,
+            meio: meio || null,
+            ...dadosSemMeio
+          }
         });
       }
 
       return res.json({
-        message: 'Solicitante registrado com sucesso (aproveitando ID existente)',
-        id: novoId
+        message: 'Solicitante vinculado ao CPF existente em solicitantes',
+        id: idFinal
       });
     }
 
-    // 3. Se não existe em nenhuma tabela, cria novo solicitante → pega ID → cria solicitantes_unicos com mesmo ID
+    // 3. Se não existe em nenhuma tabela, cria nas duas
     const novoSolicitante = await prisma.solicitantes.create({
       data: {
         cpf: cpfLimpo,
-        ...dadosSemMeio // 'meio' não incluído
+        ...dadosSemMeio
       }
     });
 
-    novoId = novoSolicitante.id;
+    idFinal = novoSolicitante.id;
 
     const novoUnico = await prisma.solicitantes_unicos.create({
       data: {
-        id: novoId,
+        id: idFinal,
         cpf: cpfLimpo,
         senha: senhaHash,
-        ...dadosSemMeio // 'meio' não incluído
+        meio: meio || null,
+        ...dadosSemMeio
       }
     });
 
@@ -256,6 +257,7 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
 
 
 
