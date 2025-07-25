@@ -136,6 +136,12 @@ router.post('/', async (req, res) => {
                       status === 'Conclu_da' ? 'Conclu_da' : 
                       status === 'Cancelada' ? 'Cancelada' : 'Pendente';
 
+      function parseData(data) {
+  if (!data || isNaN(Date.parse(data))) return null;
+  return new Date(data);
+}
+
+
     // 3. Criar a demanda com tratamento correto de datas
     const novaDemanda = await prisma.demandas.create({
       data: {
@@ -143,8 +149,10 @@ router.post('/', async (req, res) => {
         setor,
         prioridade,
         status: statusEnum,
-        dataSolicitacao: dataSolicitacao ? new Date(dataSolicitacao) : new Date(), // Corrigido aqui
-        dataTermino: dataTermino ? new Date(dataTermino) : null,
+        // dataSolicitacao: dataSolicitacao ? new Date(dataSolicitacao) : new Date(), // Corrigido aqui
+        // dataTermino: dataTermino ? new Date(dataTermino) : null,
+        dataSolicitacao: parseData(dataSolicitacao) || new Date(),
+        dataTermino: parseData(dataTermino),
         solicitant,
         reincidencia: reincidenciaEnum,
         meioSolicitacao: meioSolicitacaoEnum,
