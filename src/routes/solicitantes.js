@@ -193,6 +193,9 @@ router.post('/register', async (req, res) => {
 
     let novoId;
 
+    // Remove o campo 'meio' de dados (não existe na tabela solicitantes)
+    const { meio, ...dadosSemMeio } = dados;
+
     if (solicitante) {
       novoId = solicitante.id;
 
@@ -203,7 +206,7 @@ router.post('/register', async (req, res) => {
             id: novoId,
             cpf: cpfLimpo,
             senha: senhaHash,
-            ...dados
+            ...dadosSemMeio
           }
         });
       } else {
@@ -224,7 +227,7 @@ router.post('/register', async (req, res) => {
     const novoSolicitante = await prisma.solicitantes.create({
       data: {
         cpf: cpfLimpo,
-        ...dados
+        ...dadosSemMeio // 'meio' não incluído
       }
     });
 
@@ -235,7 +238,7 @@ router.post('/register', async (req, res) => {
         id: novoId,
         cpf: cpfLimpo,
         senha: senhaHash,
-        ...dados
+        ...dadosSemMeio // 'meio' não incluído
       }
     });
 
@@ -253,6 +256,7 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
 
 
 
