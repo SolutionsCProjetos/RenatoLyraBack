@@ -172,20 +172,25 @@ router.post('/register', async (req, res) => {
   try {
     const senhaHash = await bcrypt.hash(senha, 10);
 
-    // 1. Busca solicitantes_unicos
-    const existenteUnico = await prisma.solicitantes_unicos.findFirst({
-      where: { cpf: cpfLimpo }
+    // 🔍 1. Busca em solicitantes_unicos (com CPF normalizado)
+    const candidatosUnicos = await prisma.solicitantes_unicos.findMany();
+    const existenteUnico = candidatosUnicos.find(entry => {
+      const cpfBanco = entry.cpf?.replace(/\D/g, '');
+      return cpfBanco === cpfLimpo;
     });
 
+    // ❌ Se já tem senha definida → bloqueia
     if (existenteUnico && existenteUnico.senha?.trim()) {
       return res.status(400).json({
         error: 'Já existe um usuário com este CPF e senha definida. Faça login ou recupere sua senha.'
       });
     }
 
-    // 2. Busca solicitantes
-    const solicitanteExistente = await prisma.solicitantes.findFirst({
-      where: { cpf: cpfLimpo }
+    // 🔍 2. Busca em solicitantes com CPF normalizado
+    const candidatosSolicitantes = await prisma.solicitantes.findMany();
+    const solicitanteExistente = candidatosSolicitantes.find(entry => {
+      const cpfBanco = entry.cpf?.replace(/\D/g, '');
+      return cpfBanco === cpfLimpo;
     });
 
     const { meio, ...dadosSemMeio } = dados;
@@ -194,7 +199,7 @@ router.post('/register', async (req, res) => {
     if (solicitanteExistente) {
       idFinal = solicitanteExistente.id;
 
-      // Se solicitantes_unicos não existe com esse ID, cria agora
+      // ✅ Cria ou atualiza em solicitantes_unicos com mesmo ID
       if (!existenteUnico) {
         await prisma.solicitantes_unicos.create({
           data: {
@@ -206,9 +211,8 @@ router.post('/register', async (req, res) => {
           }
         });
       } else {
-        // Atualiza solicitantes_unicos com o mesmo ID
         await prisma.solicitantes_unicos.update({
-          where: { id: idFinal },
+          where: { id: existenteUnico.id },
           data: {
             senha: senhaHash,
             meio: meio || null,
@@ -223,11 +227,11 @@ router.post('/register', async (req, res) => {
       });
     }
 
-    // 3. Se não existe em nenhuma tabela, cria nas duas
+    // 🆕 3. Se não existe em nenhuma, cria nas duas com mesmo ID
     const novoSolicitante = await prisma.solicitantes.create({
       data: {
         cpf: cpfLimpo,
-        ...dadosSemMeio
+        ...dadosSemMeio // "meio" não vai aqui
       }
     });
 
@@ -238,7 +242,7 @@ router.post('/register', async (req, res) => {
         id: idFinal,
         cpf: cpfLimpo,
         senha: senhaHash,
-        meio: meio || null,
+        meio: meio || null, // "meio" vai aqui
         ...dadosSemMeio
       }
     });
@@ -257,6 +261,7 @@ router.post('/register', async (req, res) => {
     });
   }
 });
+
 
 
 
