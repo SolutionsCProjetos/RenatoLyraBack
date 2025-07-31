@@ -975,6 +975,9 @@ router.post('/redefinir-senha', async (req, res) => {
 router.post('/registrarID', async (req, res) => {
   const { id, cpf, senha, ...dados } = req.body;
 
+   console.log('✅ Rota registrarID foi chamada');
+  console.log('📦 Dados recebidos:', req.body);
+
   if (!cpf || !senha || !id) {
     return res.status(400).json({ error: 'ID, CPF e senha são obrigatórios' });
   }
