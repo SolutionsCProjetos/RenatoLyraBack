@@ -941,6 +941,60 @@ router.post('/redefinir-senha', async (req, res) => {
 });
 
 
+// Buscar solicitantes com CPF ausente ou duplicado
+router.get('/duplicados', async (req, res) => {
+  try {
+    // 1. Buscar CPFs duplicados
+    const cpfsDuplicados = await prisma.solicitantes.groupBy({
+      by: ['cpf'],
+      where: {
+        cpf: {
+          not: null,
+          notIn: ['']
+        }
+      },
+      having: {
+        cpf: {
+          _count: {
+            gt: 1
+          }
+        }
+      }
+    });
+
+    // 2. Extrair apenas os CPFs duplicados
+    const cpfsRepetidos = cpfsDuplicados.map(entry => entry.cpf);
+
+    // 3. Buscar todos os solicitantes com CPF ausente ou duplicado
+    const solicitantesComProblema = await prisma.solicitantes.findMany({
+      where: {
+        OR: [
+          { cpf: null },
+          { cpf: '' },
+          { cpf: { in: cpfsRepetidos } }
+        ]
+      },
+      orderBy: {
+        id: 'asc'
+      }
+    });
+
+    return res.json({
+      total: solicitantesComProblema.length,
+      duplicados: solicitantesComProblema
+    });
+
+  } catch (error) {
+    console.error('[DUPLICADOS] Erro ao buscar CPFs duplicados:', error);
+    return res.status(500).json({
+      error: 'Erro ao buscar duplicados',
+      detalhe: error.message
+    });
+  }
+});
+
+
+
 
 
 module.exports = router;
