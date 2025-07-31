@@ -944,39 +944,17 @@ router.post('/redefinir-senha', async (req, res) => {
 // Buscar solicitantes com CPF ausente ou duplicado
 router.get('/duplicados', async (req, res) => {
   try {
-    console.log('[🔍 DUPLICADOS] Iniciando busca de CPFs duplicados...');
-
-    const cpfsDuplicados = await prisma.solicitantes.groupBy({
-      by: ['cpf'],
-      where: {
-        cpf: {
-          not: null,
-          notIn: ['']
-        }
-      },
-      having: {
-        _count: {
-          cpf: {
-            gt: 1
-          }
-        }
-      }
-    });
-
-    const cpfsRepetidos = cpfsDuplicados.map(entry => entry.cpf);
-
-    const solicitantesComProblema = await prisma.solicitantes.findMany({
-      where: {
-        OR: [
-          { cpf: null },
-          { cpf: '' },
-          { cpf: { in: cpfsRepetidos } }
-        ]
-      },
-      orderBy: {
-        id: 'asc'
-      }
-    });
+    const solicitantesComProblema = await prisma.$queryRawUnsafe(`
+      SELECT * FROM solicitantes
+      WHERE cpf IS NULL OR cpf = ''
+      OR cpf IN (
+        SELECT cpf FROM solicitantes
+        WHERE cpf IS NOT NULL AND cpf != ''
+        GROUP BY cpf
+        HAVING COUNT(*) > 1
+      )
+      ORDER BY id ASC
+    `);
 
     return res.json({
       total: solicitantesComProblema.length,
@@ -984,13 +962,14 @@ router.get('/duplicados', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('[🔥 DUPLICADOS] Erro ao buscar:', error);
+    console.error('[🔥 DUPLICADOS] Erro ao buscar via raw SQL:', error);
     return res.status(500).json({
       error: 'Erro ao buscar duplicados',
       detalhe: error.message
     });
   }
 });
+
 
 
 
