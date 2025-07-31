@@ -972,82 +972,83 @@ router.post('/redefinir-senha', async (req, res) => {
 });
 
 
+
+
 router.post('/registrarID', async (req, res) => {
   const { id, cpf, senha, ...dados } = req.body;
-
-   console.log('✅ Rota registrarID foi chamada');
-  console.log('📦 Dados recebidos:', req.body);
 
   if (!cpf || !senha || !id) {
     return res.status(400).json({ error: 'ID, CPF e senha são obrigatórios' });
   }
 
-  const cpfLimpo = cpf.replace(/\D/g, '');
+  const cpfLimpo = cpf.replace(/\D/g, ''); // Remove tudo que não for número
+
+  // Valida se o CPF tem 11 dígitos
+  if (cpfLimpo.length !== 11) {
+    return res.status(400).json({ error: 'CPF inválido (deve ter 11 dígitos)' });
+  }
 
   try {
     const senhaHash = await bcrypt.hash(senha, 10);
-
-    // 🔍 Verifica se já existe um solicitantes_unicos com esse ID
-    const existenteUnico = await prisma.solicitantes_unicos.findUnique({ where: { id } });
-
-    if (existenteUnico && existenteUnico.senha?.trim()) {
-      return res.status(400).json({
-        error: 'Já existe um usuário com este CPF e senha definida. Faça login ou recupere sua senha.'
-      });
-    }
-
-    // 🔍 Busca em solicitantes para garantir que o CPF bate
-    const candidatosSolicitantes = await prisma.solicitantes.findMany();
-    const solicitanteCorrespondente = candidatosSolicitantes.find(entry => {
-      const cpfBanco = entry.cpf?.replace(/\D/g, '');
-      return cpfBanco === cpfLimpo && entry.id === id;
-    });
-
-    if (!solicitanteCorrespondente) {
-      return res.status(404).json({
-        error: 'Solicitante com esse ID e CPF não encontrado na tabela solicitantes'
-      });
-    }
-
     const { meio, ...dadosSemMeio } = dados;
 
-    // ✅ Cria ou atualiza em solicitantes_unicos com o mesmo ID
-    if (!existenteUnico) {
-      const novoUnico = await prisma.solicitantes_unicos.create({
-        data: {
-          id,
-          cpf: cpfLimpo,
-          senha: senhaHash,
-          meio: meio || null,
-          ...dadosSemMeio
-        }
-      });
+    // 🔍 1. Busca TODOS os registros em `solicitantes_unicos` e compara os CPFs (com e sem formatação)
+    const todosUnicos = await prisma.solicitantes_unicos.findMany();
+    const cpfJaExiste = todosUnicos.some((registro) => {
+      const cpfBancoLimpo = registro.cpf?.replace(/\D/g, '') || '';
+      return cpfBancoLimpo === cpfLimpo; // Compara os CPFs "limpos"
+    });
 
-      return res.json({
-        message: 'Solicitante_unico criado com ID fornecido com sucesso',
-        solicitante_unico: novoUnico
-      });
-    } else {
-      const atualizado = await prisma.solicitantes_unicos.update({
-        where: { id },
-        data: {
-          senha: senhaHash,
-          meio: meio || null,
-          ...dadosSemMeio
-        }
-      });
-
-      return res.json({
-        message: 'Solicitante_unico atualizado com ID existente',
-        solicitante_unico: atualizado
+    if (cpfJaExiste) {
+      return res.status(400).json({
+        error: 'CPF já cadastrado em solicitantes_unicos (em qualquer formato)',
+        code: 'DUPLICATE_CPF'
       });
     }
 
+    // 🔍 2. Verifica se o ID já existe em `solicitantes_unicos`
+    const idExistente = await prisma.solicitantes_unicos.findUnique({
+      where: { id }
+    });
+
+    if (idExistente) {
+      return res.status(400).json({
+        error: 'ID já está em uso em solicitantes_unicos',
+        code: 'DUPLICATE_ID'
+      });
+    }
+
+    // 🔄 3. Atualiza o CPF em `solicitantes` (se o ID existir)
+    await prisma.solicitantes.updateMany({
+      where: { id },
+      data: { 
+        cpf: cpfLimpo, // Salva sem formatação
+        ...dadosSemMeio 
+      }
+    });
+
+    // ✅ 4. Cria em `solicitantes_unicos` (com CPF normalizado)
+    const novoUnico = await prisma.solicitantes_unicos.create({
+      data: {
+        id,
+        cpf: cpfLimpo,
+        senha: senhaHash,
+        meio: meio || null,
+        ...dadosSemMeio
+      }
+    });
+
+    return res.json({
+      success: true,
+      message: 'Registro criado/atualizado com sucesso!',
+      data: novoUnico
+    });
+
   } catch (error) {
-    console.error('Erro ao registrar com ID:', error);
+    console.error('Erro no registro:', error);
     return res.status(500).json({
-      error: 'Erro ao registrar solicitante com ID',
-      detalhe: error.message
+      error: 'Erro interno',
+      details: process.env.NODE_ENV === 'development' ? error.message : undefined
     });
   }
 });
