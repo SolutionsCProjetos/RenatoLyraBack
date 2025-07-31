@@ -972,6 +972,82 @@ router.post('/redefinir-senha', async (req, res) => {
 });
 
 
+router.post('/registrar-com-id', async (req, res) => {
+  const { id, cpf, senha, ...dados } = req.body;
+
+  if (!cpf || !senha || !id) {
+    return res.status(400).json({ error: 'ID, CPF e senha são obrigatórios' });
+  }
+
+  const cpfLimpo = cpf.replace(/\D/g, '');
+
+  try {
+    const senhaHash = await bcrypt.hash(senha, 10);
+
+    // 🔍 Verifica se já existe um solicitantes_unicos com esse ID
+    const existenteUnico = await prisma.solicitantes_unicos.findUnique({ where: { id } });
+
+    if (existenteUnico && existenteUnico.senha?.trim()) {
+      return res.status(400).json({
+        error: 'Já existe um usuário com este CPF e senha definida. Faça login ou recupere sua senha.'
+      });
+    }
+
+    // 🔍 Busca em solicitantes para garantir que o CPF bate
+    const candidatosSolicitantes = await prisma.solicitantes.findMany();
+    const solicitanteCorrespondente = candidatosSolicitantes.find(entry => {
+      const cpfBanco = entry.cpf?.replace(/\D/g, '');
+      return cpfBanco === cpfLimpo && entry.id === id;
+    });
+
+    if (!solicitanteCorrespondente) {
+      return res.status(404).json({
+        error: 'Solicitante com esse ID e CPF não encontrado na tabela solicitantes'
+      });
+    }
+
+    const { meio, ...dadosSemMeio } = dados;
+
+    // ✅ Cria ou atualiza em solicitantes_unicos com o mesmo ID
+    if (!existenteUnico) {
+      const novoUnico = await prisma.solicitantes_unicos.create({
+        data: {
+          id,
+          cpf: cpfLimpo,
+          senha: senhaHash,
+          meio: meio || null,
+          ...dadosSemMeio
+        }
+      });
+
+      return res.json({
+        message: 'Solicitante_unico criado com ID fornecido com sucesso',
+        solicitante_unico: novoUnico
+      });
+    } else {
+      const atualizado = await prisma.solicitantes_unicos.update({
+        where: { id },
+        data: {
+          senha: senhaHash,
+          meio: meio || null,
+          ...dadosSemMeio
+        }
+      });
+
+      return res.json({
+        message: 'Solicitante_unico atualizado com ID existente',
+        solicitante_unico: atualizado
+      });
+    }
+
+  } catch (error) {
+    console.error('Erro ao registrar com ID:', error);
+    return res.status(500).json({
+      error: 'Erro ao registrar solicitante com ID',
+      detalhe: error.message
+    });
+  }
+});
 
 
 
