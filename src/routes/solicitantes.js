@@ -972,7 +972,7 @@ router.post('/redefinir-senha', async (req, res) => {
 });
 
 
-router.post('/registrar-com-id', async (req, res) => {
+router.post('/registrarID', async (req, res) => {
   const { id, cpf, senha, ...dados } = req.body;
 
   if (!cpf || !senha || !id) {
