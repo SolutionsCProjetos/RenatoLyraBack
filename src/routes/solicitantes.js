@@ -244,7 +244,8 @@ router.post('/register', async (req, res) => {
         id: idFinal,
         cpf: cpfLimpo,
         senha: senhaHash,
-        meio: meio || null, // "meio" vai aqui
+        meio: meio || null,
+         zonaEleitoral: zonaEleitoral || null,
         ...dadosSemMeio
       }
     });
@@ -1062,4 +1063,5 @@ router.post('/registrarID', async (req, res) => {
 
 
 module.exports = router;
+
 
