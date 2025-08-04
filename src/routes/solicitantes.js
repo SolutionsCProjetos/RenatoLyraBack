@@ -993,7 +993,7 @@ router.post('/registrarID', async (req, res) => {
 
   try {
     const senhaHash = await bcrypt.hash(senha, 10);
-    const { meio, ...dadosSemMeio } = dados;
+    const { meio, zonaEleitoral, ...dadosSemMeio } = dados;
 
     // 🔍 1. Busca TODOS os registros em `solicitantes_unicos` e compara os CPFs (com e sem formatação)
     const todosUnicos = await prisma.solicitantes_unicos.findMany();
@@ -1037,6 +1037,7 @@ router.post('/registrarID', async (req, res) => {
         cpf: cpfLimpo,
         senha: senhaHash,
         meio: meio || null,
+        zonaEleitoral: zonaEleitoral || null,
         ...dadosSemMeio
       }
     });
@@ -1063,5 +1064,6 @@ router.post('/registrarID', async (req, res) => {
 
 
 module.exports = router;
+
 
 
