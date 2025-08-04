@@ -193,7 +193,7 @@ router.post('/register', async (req, res) => {
       return cpfBanco === cpfLimpo;
     });
 
-    const { meio, ...dadosSemMeio } = dados;
+    const { meio, zonaEleitoral, ...dadosSemMeio } = dados;
     let idFinal;
 
     if (solicitanteExistente) {
@@ -207,6 +207,7 @@ router.post('/register', async (req, res) => {
             cpf: cpfLimpo,
             senha: senhaHash,
             meio: meio || null,
+            zonaEleitoral: zonaEleitoral || null,
             ...dadosSemMeio
           }
         });
@@ -216,6 +217,7 @@ router.post('/register', async (req, res) => {
           data: {
             senha: senhaHash,
             meio: meio || null,
+            zonaEleitoral: zonaEleitoral || null,
             ...dadosSemMeio
           }
         });
@@ -1060,3 +1062,4 @@ router.post('/registrarID', async (req, res) => {
 
 
 module.exports = router;
+
