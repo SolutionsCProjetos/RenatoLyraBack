@@ -583,6 +583,7 @@ model solicitantes_unicos {
   updatedAt        DateTime @default(now()) @db.DateTime(0)
   senha            String?  @db.VarChar(255)
   adm              Boolean  @default(false)
+  zonaEleitoral    String?
 }
 
 model tipo {
