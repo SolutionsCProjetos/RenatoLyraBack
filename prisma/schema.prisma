@@ -635,7 +635,10 @@ model Lider {
   id     Int    @id @default(autoincrement())
   nome   String
   bairro String
+
+  @@map("lideres") // <- nome real da tabela no banco
 }
+
 
 
 enum cliente_status {
