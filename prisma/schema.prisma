@@ -635,12 +635,15 @@ model vacinas {
 }
 
 model Lider {
-  id     Int    @id @default(autoincrement())
-  nome   String
-  bairro String
+  id           Int                    @id @default(autoincrement())
+  nome         String
+  bairro       String
 
-  @@map("lideres") // <- nome real da tabela no banco
+  solicitantes solicitantes_unicos[] // relação inversa
+
+  @@map("lideres") // nome da tabela no banco
 }
+
 
 
 
