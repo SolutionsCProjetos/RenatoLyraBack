@@ -631,6 +631,13 @@ model vacinas {
   petVacinas petVacinas[]
 }
 
+model Lider {
+  id     Int    @id @default(autoincrement())
+  nome   String
+  bairro String
+}
+
+
 enum cliente_status {
   Ativo
   Inativo
