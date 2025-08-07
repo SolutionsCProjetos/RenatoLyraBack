@@ -584,6 +584,7 @@ model solicitantes_unicos {
   senha            String?  @db.VarChar(255)
   adm              Boolean  @default(false)
   zonaEleitoral    String?
+  observacoes      String?  @db.Text
 }
 
 model tipo {
