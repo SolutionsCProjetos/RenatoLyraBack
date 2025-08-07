@@ -585,6 +585,8 @@ model solicitantes_unicos {
   adm              Boolean  @default(false)
   zonaEleitoral    String?
   observacoes      String?  @db.Text
+  liderId          Int?     // Chave estrangeira opcional
+  lider            Lider?   @relation(fields: [liderId], references: [id], onDelete: SetNull)
 }
 
 model tipo {
