@@ -169,6 +169,8 @@ router.post('/register', async (req, res) => {
 
   const cpfLimpo = cpf.replace(/\D/g, '');
 
+  console.log(req.body, 'body recebido')
+
   try {
     const senhaHash = await bcrypt.hash(senha, 10);
 
@@ -178,6 +180,8 @@ router.post('/register', async (req, res) => {
       const cpfBanco = entry.cpf?.replace(/\D/g, '');
       return cpfBanco === cpfLimpo;
     });
+
+     console.log(req.body, 'body recebido dentro do try')
 
     // ❌ Se já tem senha definida → bloqueia
     if (existenteUnico && existenteUnico.senha?.trim()) {
@@ -195,6 +199,8 @@ router.post('/register', async (req, res) => {
 
     const { meio, zonaEleitoral, observacoes, liderId, liderNome, ...dadosSemMeio } = dados;
     let idFinal;
+
+     console.log(dadosSemMeio, 'dados sem meio antes de chamar unicos')
 
     if (solicitanteExistente) {
       idFinal = solicitanteExistente.id;
@@ -1066,6 +1072,7 @@ router.post('/registrarID', async (req, res) => {
 
 
 module.exports = router;
+
 
 
 
