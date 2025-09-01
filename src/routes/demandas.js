@@ -353,7 +353,7 @@ router.put('/:id', async (req, res) => {
     }
 
     const {
-      protocolo,
+      // protocolo,
       setor,
       prioridade,
       status,
@@ -383,7 +383,7 @@ router.put('/:id', async (req, res) => {
     const demandaAtualizada = await prisma.demandas.update({
       where: { id: demandaId },
       data: {
-        protocolo,
+        // protocolo,
         setor,
         prioridade,
         status,
@@ -453,3 +453,4 @@ router.delete('/:id', async (req, res) => {
 
 
 module.exports = router;
+
