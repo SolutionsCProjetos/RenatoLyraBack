@@ -203,31 +203,6 @@ router.post('/', async (req, res) => {
 //   res.json({ protocolo });
 // });
 
-// //Listar
-// router.get('/', async (req, res) => {
-//   try {
-//     const { id } = req.query;
-
-//     const where = id
-//       ? { solicitanteId: parseInt(id) }
-//       : undefined;
-
-//     const lista = await prisma.demandas.findMany({
-//       where,
-//       include: { solicitantes: true },
-//       orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
-//     });
-
-//     console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
-
-//     res.json(lista);
-//   } catch (error) {
-//     console.error('Erro ao buscar demandas:', error);
-//     res.status(500).json({ error: 'Erro ao buscar demandas' });
-//   }
-// });
-
-
 router.get('/proximo-protocolo', async (req, res) => {
   try {
     const ano = new Date().getFullYear();
@@ -254,6 +229,31 @@ router.get('/proximo-protocolo', async (req, res) => {
     res.status(500).json({ error: 'Erro ao gerar protocolo', details: error.message });
   }
 });
+
+//Listar
+router.get('/', async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    const where = id
+      ? { solicitanteId: parseInt(id) }
+      : undefined;
+
+    const lista = await prisma.demandas.findMany({
+      where,
+      include: { solicitantes: true },
+      orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
+    });
+
+    console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
+
+    res.json(lista);
+  } catch (error) {
+    console.error('Erro ao buscar demandas:', error);
+    res.status(500).json({ error: 'Erro ao buscar demandas' });
+  }
+// });
+
 
 
 
@@ -485,6 +485,7 @@ router.delete('/:id', async (req, res) => {
 
 
 module.exports = router;
+
 
 
 
