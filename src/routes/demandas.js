@@ -252,7 +252,7 @@ router.get('/', async (req, res) => {
     console.error('Erro ao buscar demandas:', error);
     res.status(500).json({ error: 'Erro ao buscar demandas' });
   }
-// });
+});
 
 
 
@@ -485,6 +485,7 @@ router.delete('/:id', async (req, res) => {
 
 
 module.exports = router;
+
 
 
 
