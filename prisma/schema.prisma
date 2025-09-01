@@ -589,6 +589,31 @@ model solicitantes_unicos {
   lider            Lider?   @relation(fields: [liderId], references: [id], onDelete: SetNull)
 }
 
+model demandas_deletadas {
+  id                  Int      @id @default(autoincrement())
+  demandaId           Int
+  protocolo           String?
+  setor               String?
+  prioridade          String?
+  status              String?
+  dataSolicitacao     DateTime?
+  dataTermino         DateTime?
+  solicitant          String?
+  reincidencia        String?
+  meioSolicitacao     String?
+  anexarDocumentos    String?
+  envioCobranca1      String?
+  envioCobranca2      String?
+  envioParaResponsavel String?
+  observacoes         String?
+  solicitanteId       Int?
+  indicadoPor         String?
+
+  deletadoPor         Int
+  deletadoEm          DateTime @default(now())
+}
+
+
 model tipo {
   id        Int      @id @default(autoincrement())
   comercio  String?  @db.VarChar(50)
