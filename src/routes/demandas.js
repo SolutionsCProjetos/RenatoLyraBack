@@ -190,42 +190,65 @@ router.post('/', async (req, res) => {
 });
 
 
-Buscar próximo protocolo
+// Buscar próximo protocolo
+// router.get('/proximo-protocolo', async (req, res) => {
+//   const ultima = await prisma.demandas.findFirst({
+//     orderBy: { id: 'desc' }
+//   });
+
+//   const ano = new Date().getFullYear();
+//   const sequencial = (ultima?.id || 0) + 1;
+//   const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
+
+//   res.json({ protocolo });
+// });
+
+// //Listar
+// router.get('/', async (req, res) => {
+//   try {
+//     const { id } = req.query;
+
+//     const where = id
+//       ? { solicitanteId: parseInt(id) }
+//       : undefined;
+
+//     const lista = await prisma.demandas.findMany({
+//       where,
+//       include: { solicitantes: true },
+//       orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
+//     });
+
+//     console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
+
+//     res.json(lista);
+//   } catch (error) {
+//     console.error('Erro ao buscar demandas:', error);
+//     res.status(500).json({ error: 'Erro ao buscar demandas' });
+//   }
+// });
+
+
 router.get('/proximo-protocolo', async (req, res) => {
-  const ultima = await prisma.demandas.findFirst({
-    orderBy: { id: 'desc' }
-  });
-
-  const ano = new Date().getFullYear();
-  const sequencial = (ultima?.id || 0) + 1;
-  const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
-
-  res.json({ protocolo });
-});
-
-//Listar
-router.get('/', async (req, res) => {
   try {
-    const { id } = req.query;
+    const ano = new Date().getFullYear();
 
-    const where = id
-      ? { solicitanteId: parseInt(id) }
-      : undefined;
+    // Busca o maior número sequencial do protocolo no ano atual
+    const result = await prisma.$queryRaw`
+      SELECT MAX(CAST(SUBSTRING(protocolo, 6) AS UNSIGNED)) AS maxSeq
+      FROM demandas
+      WHERE protocolo LIKE ${`P${ano}%`}
+    `;
 
-    const lista = await prisma.demandas.findMany({
-      where,
-      include: { solicitantes: true },
-      orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
-    });
+    const sequencial = (result[0]?.maxSeq || 0) + 1;
+    const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
 
-    console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
-
-    res.json(lista);
+    res.json({ protocolo });
   } catch (error) {
-    console.error('Erro ao buscar demandas:', error);
-    res.status(500).json({ error: 'Erro ao buscar demandas' });
+    console.error('Erro ao gerar protocolo:', error);
+    res.status(500).json({ error: 'Erro ao gerar protocolo' });
   }
 });
+
 
 
 
@@ -455,6 +478,7 @@ router.delete('/:id', async (req, res) => {
 
 
 module.exports = router;
+
 
 
 
