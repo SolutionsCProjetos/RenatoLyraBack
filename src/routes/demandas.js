@@ -190,73 +190,43 @@ router.post('/', async (req, res) => {
 });
 
 
-// Buscar próximo protocolo
-// router.get('/proximo-protocolo', async (req, res) => {
-//   const ultima = await prisma.demandas.findFirst({
-//     orderBy: { id: 'desc' }
-//   });
-
-//   const ano = new Date().getFullYear();
-//   const sequencial = (ultima?.id || 0) + 1;
-//   const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
-
-//   res.json({ protocolo });
-// });
-
-// //Listar
-// router.get('/', async (req, res) => {
-//   try {
-//     const { id } = req.query;
-
-//     const where = id
-//       ? { solicitanteId: parseInt(id) }
-//       : undefined;
-
-//     const lista = await prisma.demandas.findMany({
-//       where,
-//       include: { solicitantes: true },
-//       orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
-//     });
-
-//     console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
-
-//     res.json(lista);
-//   } catch (error) {
-//     console.error('Erro ao buscar demandas:', error);
-//     res.status(500).json({ error: 'Erro ao buscar demandas' });
-//   }
-// });
-
-
+Buscar próximo protocolo
 router.get('/proximo-protocolo', async (req, res) => {
-  try {
-    const ano = new Date().getFullYear();
+  const ultima = await prisma.demandas.findFirst({
+    orderBy: { id: 'desc' }
+  });
 
-    // Buscar o último protocolo do ano atual
-    const ultima = await prisma.demandas.findFirst({
-      where: {
-        protocolo: {
-          startsWith: `P${ano}`
-        }
-      },
-      orderBy: { protocolo: 'desc' } // ordena pelo protocolo, não pelo id
+  const ano = new Date().getFullYear();
+  const sequencial = (ultima?.id || 0) + 1;
+  const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
+
+  res.json({ protocolo });
+});
+
+//Listar
+router.get('/', async (req, res) => {
+  try {
+    const { id } = req.query;
+
+    const where = id
+      ? { solicitanteId: parseInt(id) }
+      : undefined;
+
+    const lista = await prisma.demandas.findMany({
+      where,
+      include: { solicitantes: true },
+      orderBy: { dataSolicitacao: 'desc' } // <-- Ordena pela data mais recente
     });
 
-    let sequencial = 1;
-    if (ultima?.protocolo) {
-      // extrai os últimos 4 dígitos do protocolo
-      const numero = parseInt(ultima.protocolo.slice(-4), 10);
-      sequencial = numero + 1;
-    }
+    console.log(id ? `Filtrando por solicitanteId: ${id}` : 'Buscando todas as demandas');
 
-    const protocolo = `P${ano}${String(sequencial).padStart(4, '0')}`;
-
-    res.json({ protocolo });
+    res.json(lista);
   } catch (error) {
-    console.error('Erro ao gerar protocolo:', error);
-    res.status(500).json({ error: 'Erro ao gerar protocolo' });
+    console.error('Erro ao buscar demandas:', error);
+    res.status(500).json({ error: 'Erro ao buscar demandas' });
   }
 });
+
 
 
 
@@ -485,5 +455,6 @@ router.delete('/:id', async (req, res) => {
 
 
 module.exports = router;
+
 
 
