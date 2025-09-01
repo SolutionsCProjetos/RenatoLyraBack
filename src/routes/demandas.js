@@ -476,15 +476,70 @@ router.put('/:id', async (req, res) => {
 
 
 // Deletar
+// router.delete('/:id', async (req, res) => {
+//   await prisma.demandas.delete({ where: { id: parseInt(req.params.id) } });
+//   res.json({ deleted: true });
+// });
+
+
 router.delete('/:id', async (req, res) => {
-  await prisma.demandas.delete({ where: { id: parseInt(req.params.id) } });
-  res.json({ deleted: true });
+  try {
+    const demandaId = parseInt(req.params.id);
+
+    // 1. Buscar a demanda original
+    const demanda = await prisma.demandas.findUnique({
+      where: { id: demandaId }
+    });
+
+    if (!demanda) {
+      return res.status(404).json({ error: 'Demanda não encontrada' });
+    }
+
+    // Pega o usuário logado (do middleware auth)
+    const userId = req.user?.id || null;
+
+    // 2. Inserir na tabela de log
+    await prisma.demandas_deletadas.create({
+      data: {
+        demandaId: demanda.id,
+        protocolo: demanda.protocolo,
+        setor: demanda.setor,
+        prioridade: demanda.prioridade,
+        status: demanda.status,
+        dataSolicitacao: demanda.dataSolicitacao,
+        dataTermino: demanda.dataTermino,
+        solicitant: demanda.solicitant,
+        reincidencia: demanda.reincidencia,
+        meioSolicitacao: demanda.meioSolicitacao,
+        anexarDocumentos: demanda.anexarDocumentos,
+        envioCobranca1: demanda.envioCobranca1,
+        envioCobranca2: demanda.envioCobranca2,
+        envioParaResponsavel: demanda.envioParaResponsavel,
+        observacoes: demanda.observacoes,
+        solicitanteId: demanda.solicitanteId,
+        indicadoPor: demanda.indicadoPor,
+        deletadoPor: userId,
+      }
+    });
+
+    // 3. Deletar da tabela original
+    await prisma.demandas.delete({
+      where: { id: demandaId }
+    });
+
+    res.json({ success: true, message: 'Demanda deletada e registrada no log' });
+  } catch (error) {
+    console.error('Erro ao deletar demanda:', error);
+    res.status(500).json({ error: 'Erro ao deletar demanda' });
+  }
 });
 
 
 
 
+
 module.exports = router;
+
 
 
 
